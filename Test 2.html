@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <svg width="1260" height="900"></svg>
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-hexbin.v0.2.min.js"></script>
+    <script>
+
+        var svg = d3.select("svg"),
+            width = +svg.attr("width"),
+            height = +svg.attr("height");
+
+        var delta = 0.001,
+            i = 0, j,
+            n = 600, // Total number of random points.
+            k = 1; // Number of points to replace per frame.
+
+        var rx = d3.randomNormal(width / 2, 400),
+            ry = d3.randomNormal(height / 4, 100),
+            points = d3.range(n).map(function () { return [rx(), ry()]; });
+
+        var color = d3.scaleSequential(d3.interpolateLab("black", "white"))
+            .domain([0, 20]);
+
+        var hexbin = d3.hexbin()
+            .radius(16)
+            .extent([[0, 0], [width, height]]);
+
+        var hexagon = svg.selectAll("path")
+            .data(hexbin(points))
+            .enter().append("path")
+            .attr("d", hexbin.hexagon(15.5))
+            .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+            .attr("fill", function (d) { return color(d.length); })
+            .on("mouseover", handleMouseOver)
+        
+
+        d3.timer(function (elapsed) {
+            rx = d3.randomNormal(width / 3 + 20 * Math.sin(elapsed * delta), 600),
+                ry = d3.randomNormal(height / 2 + 40 * Math.sin(elapsed * delta), 80);
+            for (j = 0; j < k; ++j, i = (i + 1) % n) points[i][0] = rx(), points[i][1] = ry();
+
+            hexagon = hexagon
+                .data(hexbin(points), function (d) { return d.x + "," + d.y; });
+
+            hexagon.exit().remove();
+
+            hexagon = hexagon.enter().append("path")
+                .attr("d", hexbin.hexagon(15.5))
+                .attr("transform", function (d) { return "translate(" + d.x + "," + d.y + ")"; })
+                .merge(hexagon)
+                .attr("fill", function (d) { return color(d.length); })
+                
+        });
+
+        // Create Event Handlers for mouse
+        function handleMouseOver() {  // Add interactivity
+                d3.select(this)
+                .attr("fill", "white")
+                
+        }
+
+
+    </script>
+</body>
+
+</html>
